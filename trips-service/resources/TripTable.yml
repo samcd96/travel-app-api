@@ -1,0 +1,20 @@
+TripTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: TripTable
+    BillingMode: PAY_PER_REQUEST
+    AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: createdBy
+        AttributeType: S
+    KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+    GlobalSecondaryIndexes:
+      - IndexName: createdByIndex
+        KeySchema:
+          - AttributeName: createdBy
+            KeyType: HASH
+        Projection:
+          ProjectionType: ALL

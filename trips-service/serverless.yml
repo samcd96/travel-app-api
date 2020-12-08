@@ -1,5 +1,4 @@
-service:
-  name: trips-service
+service: trips-server
 
 plugins:
   - serverless-bundle
@@ -8,13 +7,77 @@ plugins:
 provider:
   name: aws
   runtime: nodejs12.x
+  region: eu-west-2
   memorySize: 256
   stage: ${opt:stage, 'dev'}
-  
+  environment:
+    TRIP_TABLE_NAME: ${self:custom.TripTable.name}
+    TRIPS_BUCKET_NAME: ${self:custom.TripsBucket.name}
+  iamRoleStatements:
+    - ${file(iam/TripTableIAM.yml):TripTableIAM}
+    - ${file(iam/TripsBucketIAM.yml):TripsBucketIAM}
+
+resources:
+  Resources:
+    TripTable: ${file(resources/TripTable.yml):TripTable}
+    TripsBucket: ${file(resources/TripsBucket.yml):TripsBucket}
+    TripsBucketPolicy: ${file(resources/TripsBucket.yml):TripsBucketPolicy}
+
 functions:
-  hello:
-    handler: src/handlers/hello.handler
+  createTrip:
+    handler: src/handlers/createTrip.handler
+    events:
+      - http:
+          method: POST
+          path: /trips
+          cors: true
+          authorizer:
+            arn: ${self:custom.authorizer}
+
+  listTrips:
+    handler: src/handlers/listTrips.handler
     events:
       - http:
           method: GET
-          path: /hello
+          path: /trips
+          cors: true
+          authorizer:
+            arn: ${self:custom.authorizer}
+
+  getTrip:
+    handler: src/handlers/getTrip.handler
+    events:
+      - http:
+          method: GET
+          path: /trips/{id}
+          cors: true
+          authorizer:
+            arn: ${self:custom.authorizer}
+
+  deleteTrip:
+    handler: src/handlers/deleteTrip.handler
+    events:
+      - http:
+          method: DELETE
+          path: /trips/{id}
+          cors: true
+          authorizer:
+            arn: ${self:custom.authorizer}
+
+  updateTrip:
+    handler: src/handlers/updateTrip.handler
+    events:
+      - http:
+          method: PUT
+          path: /trips/{id}
+          cors: true
+          authorizer:
+            arn: ${self:custom.authorizer}
+
+custom:
+  authorizer: arn:aws:cognito-idp:eu-west-2:866518846783:userpool/eu-west-2_e1wu3D067
+  TripTable:
+    name: !Ref TripTable
+    arn: !GetAtt TripTable.Arn
+  TripsBucket:
+    name: trips-bucket-sdlkhfwijdn12-${self:provider.stage}

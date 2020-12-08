@@ -1,0 +1,12 @@
+TripTableIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:PutItem
+    - dynamodb:Scan
+    - dynamodb:GetItem
+    - dynamodb:UpdateItem
+    - dynamodb:Query
+    - dynamodb:DeleteItem
+  Resource:
+    - ${self:custom.TripTable.arn}
+    - !Join ["/", ["${self:custom.TripTable.arn}", "index", "createdByIndex"]]
